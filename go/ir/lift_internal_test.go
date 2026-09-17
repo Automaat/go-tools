@@ -41,18 +41,15 @@ func BenchmarkReplaceAllRepeatedCompositeValue(b *testing.B) {
 			for i := range refs {
 				refs[i] = instr
 			}
+			x.referrers = refs
+			for i := range instr.Values {
+				instr.Values[i] = x
+			}
 
 			b.ReportAllocs()
 			for b.Loop() {
-				b.StopTimer()
-				for i := range instr.Values {
-					instr.Values[i] = x
-				}
-				x.referrers = refs
-				y.referrers = nil
-				b.StartTimer()
-
 				replaceAll(x, y)
+				x, y = y, x
 			}
 		})
 	}
