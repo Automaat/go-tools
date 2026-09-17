@@ -1,0 +1,52 @@
+name: Fork IR lift paired benchmark
+
+on:
+  push:
+    branches:
+      - experiment/ir-lift-fast-paths
+
+permissions: {}
+
+jobs:
+  benchmark:
+    if: github.repository == 'Automaat/go-tools'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    container:
+      image: golang:1.26
+      options: --cpus 2 --memory 1g --memory-swap 1g
+    env:
+      GOMAXPROCS: "2"
+      GOMEMLIMIT: 768MiB
+      GOFLAGS: -p=2
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: experiment/ir-lift-baseline
+          path: baseline
+          persist-credentials: false
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: experiment/ir-lift-fast-paths
+          path: candidate
+          persist-credentials: false
+      - name: Baseline first
+        working-directory: baseline
+        run: >-
+          go test ./go/ir -run '^$' -bench '^BenchmarkSSA$' -benchmem
+          -benchtime=1x -count=3 -timeout=10m
+      - name: Candidate second
+        working-directory: candidate
+        run: >-
+          go test ./go/ir -run '^$' -bench '^BenchmarkSSA$' -benchmem
+          -benchtime=1x -count=3 -timeout=10m
+      - name: Candidate first
+        working-directory: candidate
+        run: >-
+          go test ./go/ir -run '^$' -bench '^BenchmarkSSA$' -benchmem
+          -benchtime=1x -count=3 -timeout=10m
+      - name: Baseline second
+        working-directory: baseline
+        run: >-
+          go test ./go/ir -run '^$' -bench '^BenchmarkSSA$' -benchmem
+          -benchtime=1x -count=3 -timeout=10m
