@@ -908,6 +908,20 @@ func liftable(alloc *Alloc, instructions BlockMap[liftInstructions], heads Block
 // liftAlloc lifts alloc into registers and populates newPhis with all the φ-nodes it may require.
 func liftAlloc(df domFrontier, alloc *Alloc, newPhis BlockMap[[]newPhi]) {
 	fn := alloc.Parent()
+	refs := *alloc.Referrers()
+	hasLoad := false
+	usesAllocBlockOnly := true
+	for _, instr := range refs {
+		if _, ok := instr.(*Load); ok {
+			hasLoad = true
+		}
+		if instr.Block() != alloc.Block() {
+			usesAllocBlockOnly = false
+		}
+	}
+	if !hasLoad || usesAllocBlockOnly {
+		return
+	}
 
 	defblocks := fn.blockset(0)
 	Aphi := fn.blockset(2)
@@ -915,7 +929,7 @@ func liftAlloc(df domFrontier, alloc *Alloc, newPhis BlockMap[[]newPhi]) {
 
 	// Compute defblocks, the set of blocks containing a
 	// definition of the alloc cell.
-	for _, instr := range *alloc.Referrers() {
+	for _, instr := range refs {
 		switch instr := instr.(type) {
 		case *Store:
 			defblocks.Add(instr.Block())
