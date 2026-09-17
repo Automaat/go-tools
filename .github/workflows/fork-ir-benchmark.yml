@@ -3,7 +3,7 @@ name: Fork IR benchmark
 on:
   push:
     branches:
-      - perf/ir-composite-replace-all
+      - "perf/ir-composite-*"
 
 permissions: {}
 
