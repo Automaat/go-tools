@@ -32,3 +32,12 @@ jobs:
           -benchtime=200ms
           -count=7
           -timeout=10m
+      - name: Benchmark standard-library IR
+        run: >-
+          go test ./go/ir
+          -run '^$'
+          -bench '^BenchmarkSSA$'
+          -benchmem
+          -benchtime=1x
+          -count=5
+          -timeout=10m
